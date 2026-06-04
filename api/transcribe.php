@@ -92,7 +92,7 @@ if ($result['transcript'] !== '') {
         $translateToEnglish
         && (isBangla($result['language']) || $languageMode === 'bn' || containsBanglaScript($result['transcript']))
     ) {
-        $translated = translateBanglaToEnglish($result['transcript'], (int) ($config['request_timeout_seconds'] ?? 75));
+        $translated = translateBanglaToEnglish($result['transcript'], (int) ($config['request_timeout_seconds'] ?? 75), $config);
         if ($translated !== '') {
             $english = $translated;
             $translationSource = 'translation';
@@ -179,7 +179,7 @@ function transcribeWithDeepgram(
     bool $smartFormat
 ): array {
     $params = [
-        'model' => 'nova-3-general',
+        'model' => 'nova-2',
         'punctuate' => $smartFormat ? 'true' : 'false',
         'smart_format' => $smartFormat ? 'true' : 'false',
     ];
@@ -278,14 +278,71 @@ function containsBanglaScript(string $text): bool
     return preg_match('/[\x{0980}-\x{09FF}]/u', $text) === 1;
 }
 
-function translateBanglaToEnglish(string $text, int $timeout): string
+function translateBanglaToEnglish(string $text, int $timeout, array $config = []): string
 {
+    $apiKey = trim((string) ($config['gemini_api_key'] ?? ''));
+    if ($apiKey !== '') {
+        $translated = translateWithGemini($text, $apiKey, $timeout);
+        if ($translated !== '') {
+            return $translated;
+        }
+    }
+
     $translated = translateWithGooglePublic($text, $timeout);
     if ($translated !== '') {
         return $translated;
     }
 
     return translateWithMyMemory($text, $timeout);
+}
+
+function translateWithGemini(string $text, string $apiKey, int $timeout): string
+{
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+
+    $prompt = "Translate the following Bangla text to English and correct it if necessary. Return only the translated English text with no additional commentary:\n\n" . $text;
+
+    $payload = [
+        'contents' => [
+            [
+                'parts' => [
+                    ['text' => $prompt]
+                ]
+            ]
+        ]
+    ];
+
+    $ch = curl_init($url);
+    if ($ch === false) {
+        return '';
+    }
+
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+        ],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => max(5, min($timeout, 30)),
+    ]);
+
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+
+    if ($response === false || $status < 200 || $status >= 300) {
+        file_put_contents(__DIR__ . '/../gemini_debug.log', "Status: $status\nResponse: $response\nError: " . curl_error($ch) . "\n", FILE_APPEND);
+        return '';
+    }
+
+    $json = json_decode($response, true);
+    if (!is_array($json)) {
+        return '';
+    }
+
+    $translatedText = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
+    return trim($translatedText);
 }
 
 function translateWithGooglePublic(string $text, int $timeout): string

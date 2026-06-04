@@ -6,6 +6,7 @@ $localConfig = __DIR__ . '/config.local.php';
 $config = [
     'deepgram_api_key' => getenv('DEEPGRAM_API_KEY') ?: '',
     'deepgram_endpoint' => 'https://api.deepgram.com/v1/listen',
+    'gemini_api_key' => getenv('GEMINI_API_KEY') ?: '',
     'max_upload_bytes' => 25 * 1024 * 1024,
     'request_timeout_seconds' => 75,
 ];

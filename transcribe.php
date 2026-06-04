@@ -48,7 +48,7 @@
             <span>Engine</span>
             <select id="engineMode">
               <option value="browser" selected>Browser speech</option>
-              <option value="server">Server Deepgram</option>
+              <!-- <option value="server">Server Deepgram</option> -->
             </select>
           </label>
           <label>
