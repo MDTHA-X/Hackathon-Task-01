@@ -20,8 +20,11 @@ if ($text === '') {
     respond(400, ['ok' => false, 'error' => 'No text was provided.']);
 }
 
+$source = trim((string) ($input['source'] ?? 'bn'));
+$target = trim((string) ($input['target'] ?? 'en'));
+
 $timeout = (int) ($config['request_timeout_seconds'] ?? 75);
-$translated = translateBanglaToEnglish($text, $timeout, $config);
+$translated = translateText($text, $source, $target, $timeout, $config);
 
 if ($translated === '') {
     respond(502, ['ok' => false, 'error' => 'Translation is unavailable right now.']);
@@ -29,7 +32,8 @@ if ($translated === '') {
 
 respond(200, [
     'ok' => true,
-    'english' => $translated,
+    'english' => $target === 'en' ? $translated : null,
+    'translated' => $translated,
 ]);
 
 function respond(int $status, array $payload): never
@@ -39,29 +43,32 @@ function respond(int $status, array $payload): never
     exit;
 }
 
-function translateBanglaToEnglish(string $text, int $timeout, array $config = []): string
+function translateText(string $text, string $source, string $target, int $timeout, array $config = []): string
 {
     $apiKey = trim((string) ($config['gemini_api_key'] ?? ''));
     if ($apiKey !== '') {
-        $translated = translateWithGemini($text, $apiKey, $timeout);
+        $translated = translateWithGemini($text, $source, $target, $apiKey, $timeout);
         if ($translated !== '') {
             return $translated;
         }
     }
 
-    $translated = translateWithGooglePublic($text, $timeout);
+    $translated = translateWithGooglePublic($text, $source, $target, $timeout);
     if ($translated !== '') {
         return $translated;
     }
 
-    return translateWithMyMemory($text, $timeout);
+    return translateWithMyMemory($text, $source, $target, $timeout);
 }
 
-function translateWithGemini(string $text, string $apiKey, int $timeout): string
+function translateWithGemini(string $text, string $source, string $target, string $apiKey, int $timeout): string
 {
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+    
+    $sourceName = $source === 'bn' ? 'Bangla' : 'English';
+    $targetName = $target === 'en' ? 'English' : 'Bangla';
 
-    $prompt = "Translate the following Bangla text to English and correct it if necessary. Return only the translated English text with no additional commentary:\n\n" . $text;
+    $prompt = "Translate the following $sourceName text to $targetName and correct it if necessary. Return only the translated $targetName text with no additional commentary:\n\n" . $text;
 
     $payload = [
         'contents' => [
@@ -93,7 +100,6 @@ function translateWithGemini(string $text, string $apiKey, int $timeout): string
     curl_close($ch);
 
     if ($response === false || $status < 200 || $status >= 300) {
-        file_put_contents(__DIR__ . '/../gemini_debug.log', "Status: $status\nResponse: $response\nError: " . curl_error($ch) . "\n", FILE_APPEND);
         return '';
     }
 
@@ -106,12 +112,12 @@ function translateWithGemini(string $text, string $apiKey, int $timeout): string
     return trim($translatedText);
 }
 
-function translateWithGooglePublic(string $text, int $timeout): string
+function translateWithGooglePublic(string $text, string $source, string $target, int $timeout): string
 {
     $query = http_build_query([
         'client' => 'gtx',
-        'sl' => 'bn',
-        'tl' => 'en',
+        'sl' => $source,
+        'tl' => $target,
         'dt' => 't',
         'q' => $text,
     ]);
@@ -136,11 +142,11 @@ function translateWithGooglePublic(string $text, int $timeout): string
     return trim(implode('', $parts));
 }
 
-function translateWithMyMemory(string $text, int $timeout): string
+function translateWithMyMemory(string $text, string $source, string $target, int $timeout): string
 {
     $query = http_build_query([
         'q' => $text,
-        'langpair' => 'bn|en',
+        'langpair' => "$source|$target",
     ]);
 
     $body = fetchUrl('https://api.mymemory.translated.net/get?' . $query, $timeout);

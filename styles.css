@@ -199,11 +199,18 @@ h2 {
   grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
   grid-template-areas:
     "recorder result"
-    "session session";
+    "session session"
+    "medical medical";
   gap: 18px;
   width: min(1180px, calc(100% - 36px));
   margin: 0 auto;
   padding: 26px 0 54px;
+}
+
+.medical-area {
+  grid-area: medical;
+  display: grid;
+  gap: 28px;
 }
 
 .tool-panel {
@@ -457,7 +464,8 @@ dd {
     grid-template-areas:
       "recorder"
       "result"
-      "session";
+      "session"
+      "medical";
   }
 
   .result-list {
@@ -486,4 +494,207 @@ dd {
   .record-row {
     width: 100%;
   }
+}
+
+/* Demographics Form */
+.demographics-form {
+  margin-top: 24px;
+  background: var(--surface-soft);
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.form-group-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group label {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+/* Medical History Pipeline */
+.medical-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  width: min(900px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: clamp(40px, 8vw, 96px) 0;
+}
+
+.step-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.file-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  background: var(--surface-soft);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  margin-bottom: 16px;
+}
+
+.file-upload-area:hover,
+.file-upload-area.drag-over {
+  border-color: var(--accent);
+  background: #e6f0ef;
+}
+
+.file-upload-area p {
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0;
+}
+
+.preview-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.preview-item {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.vitals-grid .form-group {
+  margin-bottom: 0;
+}
+
+/* Digital Report */
+.digital-report {
+  background: #fbfcfe;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+}
+
+.report-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.report-header h2 {
+  font-size: 1.8rem;
+  color: var(--ink);
+}
+
+.triage-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.triage-Green { background-color: #10b981; }
+.triage-Yellow { background-color: #f59e0b; color: #151922; }
+.triage-Red { background-color: #ef4444; }
+.triage-Black { background-color: #111827; }
+.triage-Unknown { background-color: var(--muted); }
+
+.report-section {
+  margin-bottom: 28px;
+}
+
+.report-section h3 {
+  font-size: 1.1rem;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.report-item {
+  background: var(--surface);
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.report-item strong {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.report-text {
+  white-space: pre-wrap;
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+.tts-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.hidden {
+  display: none !important;
 }
